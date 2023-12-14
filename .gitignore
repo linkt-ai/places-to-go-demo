@@ -1,0 +1,6 @@
+# Directories
+data/
+.venv/
+
+# Enivorment & Configuration
+.env
