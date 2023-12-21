@@ -39,10 +39,7 @@ class KeywordVectorstore:
             (row["keyword"], row["score"])
             for index, row in vectorstore[["keyword", "score"]].head(3).iterrows()
         ]
-        print(top_keywords)
-
-        results = vectorstore.keyword.values[:3].tolist()
-        return results
+        return top_keywords
 
     def get_keywords(self, posts_query_terms: List[str]) -> Dict[str, str]:
         """Gets the most similar keywords to the given posts.
