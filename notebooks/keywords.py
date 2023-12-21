@@ -5,7 +5,7 @@ import numpy as np
 
 from openai import OpenAI
 
-FILE_PATH = "data/keywords_vectorstore.pkl"
+FILE_PATH = "../data/keyword_vectorstore.pkl"
 
 
 class KeywordVectorstore:
@@ -32,10 +32,15 @@ class KeywordVectorstore:
             List[str]: The most similar keywords to the given embedding.
         """
         vectorstore = self._load()
-        vectorstore["score"] = vectorstore.embedding.apply(
-            lambda x: np.dot(x, embedding)
-        )
+        vectorstore["score"] = vectorstore.vector.apply(lambda x: np.dot(x, embedding))
         vectorstore.sort_values(by="score", ascending=False, inplace=True)
+
+        top_keywords = [
+            (row["keyword"], row["score"])
+            for index, row in vectorstore[["keyword", "score"]].head(3).iterrows()
+        ]
+        print(top_keywords)
+
         results = vectorstore.keyword.values[:3].tolist()
         return results
 
