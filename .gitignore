@@ -4,3 +4,6 @@ data/
 
 # Enivorment & Configuration
 .env
+
+# Python Generated Files
+__pycache__/
