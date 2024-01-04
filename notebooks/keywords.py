@@ -14,6 +14,14 @@ class KeywordVectorstore:
     This is used to generate keyword sets for entities.
     """
 
+    def __init__(self, num_results: int = 3):
+        """Initializes the keyword vectorstore.
+
+        Args:
+            num_results (int, optional): The number of results to return. Defaults to 3.
+        """
+        self.num_results = num_results
+
     def _load(self) -> pd.DataFrame:
         """Loads the keyword vectorstore from the given file path.
 
@@ -37,7 +45,9 @@ class KeywordVectorstore:
 
         top_keywords = [
             (row["keyword"], row["score"])
-            for index, row in vectorstore[["keyword", "score"]].head(3).iterrows()
+            for index, row in vectorstore[["keyword", "score"]]
+            .head(self.num_results)
+            .iterrows()
         ]
         return top_keywords
 
