@@ -5,17 +5,17 @@ import numpy as np
 
 from openai import OpenAI
 
-FILE_PATH = "../data/keyword_vectorstore.pkl"
+FILE_PATH = "../data/persona_dataframe.pkl"
 
 
-class KeywordVectorstore:
-    """A vectorstore of the keywords.
+class PersonaVectorstore:
+    """A vectorstore of the personas.
 
-    This is used to generate keyword sets for entities.
+    This is used to generate persona relationships for entities.
     """
 
     def __init__(self, num_results: int = 3):
-        """Initializes the keyword vectorstore.
+        """Initializes the persona vectorstore.
 
         Args:
             num_results (int, optional): The number of results to return. Defaults to 3.
@@ -24,25 +24,45 @@ class KeywordVectorstore:
         self.vectorstore = pd.read_pickle(FILE_PATH)
 
     def _search(self, embedding: List[float]) -> List[str]:
-        """Searches for the most similar keywords to the given embedding.
+        """Searches for the most similar personas to the given embedding.
 
         Args:
             embedding (List[float]): The embedding to search for.
 
         Returns:
-            List[str]: The most similar keywords to the given embedding.
+            List[str]: The most similar personas to the given embedding.
         """
+        # Compute the raw similarit scores
         vectorstore = self.vectorstore.copy()
-        vectorstore["score"] = vectorstore.vector.apply(lambda x: np.dot(x, embedding))
-        vectorstore.sort_values(by="score", ascending=False, inplace=True)
+        vectorstore["score"] = vectorstore.embeddings.apply(
+            lambda x: np.dot(x, embedding)
+        )
 
-        top_keywords = [
-            (row["keyword"], row["score"])
-            for index, row in vectorstore[["keyword", "score"]]
-            .head(self.num_results)
-            .iterrows()
-        ]
-        return top_keywords
+        # Normalize scores using Min-Max normalization
+        min_score = vectorstore.score.min()
+        max_score = vectorstore.score.max()
+        vectorstore["score"] = vectorstore.score.apply(
+            lambda x: (x - min_score) / (max_score - min_score)
+        )
+
+        # Sort by score and return the top results
+        vectorstore.sort_values(by="score", ascending=False, inplace=True)
+        top_personas = vectorstore.head(self.num_results)
+
+        # Variable thresholds based on the current number of selected personas
+        threshold_1 = 0.75
+        threshold_2 = 0.65
+
+        selected_personas = []
+        for _, row in top_personas.iterrows():
+            if len(selected_personas) < 1 and row.score:
+                selected_personas.append((row.persona, row.score))
+            elif len(selected_personas) < 2 and row.score >= threshold_1:
+                selected_personas.append((row.persona, row.score))
+            elif len(selected_personas) < 3 and row.score >= threshold_2:
+                selected_personas.append((row.persona, row.score))
+
+        return selected_personas
 
     def search_keywords(self, embeddings: List[List[float]]) -> List[List[str]]:
         """Search for the most similar keywords to the given embeddings.
@@ -83,5 +103,6 @@ client = OpenAI()
 
 
 def embed_terms(terms: List[str]):
+    """Helper function to embed terms."""
     response = client.embeddings.create(input=terms, model="text-embedding-ada-002")
     return [datum.embedding for datum in response.data]
