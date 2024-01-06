@@ -1,5 +1,6 @@
 # Directories
 data/
+models/
 .venv/
 
 
@@ -9,3 +10,5 @@ data/
 # Python Generated Files
 .DS_Store
 **/__pycache__
+
+
