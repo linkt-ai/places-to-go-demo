@@ -145,3 +145,42 @@ def scrape_business_reviews(
         return None, e
     finally:
         driver.quit()
+
+
+def scrape_business_page_content(
+    url, proxy
+) -> Tuple[Union[Dict[str, str], None], Union[Exception, None]]:
+    """Scrape the description of the Yelp business at the given URL."""
+
+    try:
+        driver = setup_driver(proxy)
+
+        # Get the page and ensure it is valid (10 second timeout)
+        driver.set_page_load_timeout(10)
+        driver.get(url)
+
+        if not is_valid_yelp_page(driver.page_source):
+            raise InvalidYelpPage()
+
+        # Scrape all the text on the page into one long concatenated string
+        page_text = driver.find_element(By.TAG_NAME, "body").text
+
+        # Do some random stuff to avoid getting blocked by Yelp
+        do_random_activity(driver)
+
+        return page_text, None
+
+    except TimeoutException as e:
+        return None, e
+    except DriverSetupFailed as e:
+        print(f"Driver setup failed with proxy: {proxy}")
+        return None, e
+    except InvalidYelpPage as e:
+        return None, e
+    except Exception as e:  # pylint: disable=broad-except
+        if isinstance(e, KeyboardInterrupt):
+            raise e
+        print(f"Error scraping page: {url}\n{e}")
+        return None, e
+    finally:
+        driver.quit()

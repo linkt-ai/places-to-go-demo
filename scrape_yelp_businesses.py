@@ -9,12 +9,12 @@ from concurrent import futures
 
 from src import launch
 from src.utils import format_proxy
-from src.scrape import scrape_business_reviews
+from src.scrape import scrape_business_reviews, scrape_business_page_content
 
-REMAINING_FILE = "scrape/locations_remaining.json"
-FINSIHED_FILE = "scrape/locations_finished.json"
-FAILED_FILE = "scrape/locations_failed.json"
-BASE_FILE = "scrape/locations.json"
+REMAINING_FILE = "data/scrape/locations_remaining.json"
+FINSIHED_FILE = "data/scrape/locations_finished.json"
+FAILED_FILE = "data/scrape/locations_failed.json"
+BASE_FILE = "data/scrape/locations.json"
 
 
 def read_json():
@@ -319,6 +319,35 @@ def scrape_locations(ip_manager, data_manager, counter):
             data_manager.log_status()
 
 
+def scrape_locations_for_page_content(ip_manager, data_manager, counter):
+    """Run the loop to scrape locations."""
+
+    while True:
+        ip = ip_manager.current
+        biz = data_manager.next_business
+        if not biz:
+            break
+
+        url = biz["url"]
+
+        content, failed = scrape_business_page_content(url, format_proxy(ip))
+
+        if failed:
+            data_manager.failed(biz, ip, failed)
+            ip_manager.update(False)
+
+        else:
+            biz["page_content"] = content
+            data_manager.success(biz, ip)
+            ip_manager.update(True)
+
+        counter.increment()
+        data_manager.save_results()
+
+        if counter.value % 20 == 0:
+            data_manager.log_status()
+
+
 def main():
     """Main function"""
 
@@ -345,7 +374,12 @@ def main():
 
             try:
                 _threads = {
-                    executor.submit(scrape_locations, ip_manager, data_manager, counter)
+                    executor.submit(
+                        scrape_locations_for_page_content,
+                        ip_manager,
+                        data_manager,
+                        counter,
+                    )
                     for _ in range(5)
                 }
                 futures.wait(_threads)
