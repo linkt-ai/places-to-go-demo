@@ -2,10 +2,13 @@
 data/
 .venv/
 
+**/.DS_Store
+
 
 # Enivorment & Configuration
 .env
 
+
 # Python Generated Files
-.DS_Store
 **/__pycache__
+model_state_dicts/*
