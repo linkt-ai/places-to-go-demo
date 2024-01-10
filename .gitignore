@@ -1,6 +1,7 @@
 # Directories
 data/
 .venv/
+models/
 
 **/.DS_Store
 
