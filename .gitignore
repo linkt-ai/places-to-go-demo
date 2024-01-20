@@ -1,8 +1,7 @@
 # Directories
 data/
-models/
 .venv/
-models/
+checkpoints/
 
 .DS_Store
 
