@@ -1,5 +1,7 @@
 """The venue.py file defines the data models for the Venue resource."""
+import json
 from enum import Enum
+from typing import Any, Dict
 
 from pydantic import BaseModel
 
@@ -15,29 +17,30 @@ class City(Enum):
 
 
 class YelpVenue(BaseModel):
-    """The YelpVenue class defines the data model for a Yelp venue."""
+    """The YelpVenue class defines the data model for a Yelp venue.
 
-    _id: str
+    Attributes:
+        id (str): The venue ID.
+        city (City): The city of the venue.
+        name (str): The name of the venue.
+        category (str): The category of the venue.
+        thumbnail_url (str): The thumbnail URL of the venue.
+        url (str): The URL of the venue.
+    """
+
+    id: str
     city: City
     name: str
     category: str
     thumbnail_url: str
     url: str
 
-    def model_dump(self, **kwargs):
+    def model_dump(self, **kwargs) -> Dict[str, Any]:
         """Dump the model to a dictionary.
 
         Returns:
-            dict: The model as a dictionary.
+            Dict[str, str]: The model as a dictionary.
         """
-        data = super().model_dump(**kwargs)
-        city = data.get("city", None)
-
-        # Kind of a redundant check, but we want to make sure that the city is
-        # present.
-        if city is None:
-            raise ValueError("City is required in a YelpVenue model.")
-
-        # Set the city to the value of the city enum.
-        data["city"] = city.value
+        json_data = super().model_dump_json(**kwargs)
+        data = json.loads(json_data)
         return data

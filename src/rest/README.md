@@ -63,18 +63,14 @@ Get a venue from the database.
 
 ### GET `/itinerary?user_id=<user_id: str>`
 
-Get the itinerary for a user.
+Get the itinerary for a user. Optionally declare the events to be returned with
+the Itinerary.
 
 ### POST `/itinerary`
 
 Create a new itinerary for a user. Will overwrite any current itinerary.
 
 ## Event Resource
-
-### GET `/itinerary/event?user_id=<user_id: str>&event_id=<event_id?: str>`
-
-Get the events for a user's itinerary. Optionally filter for a specific event if
-only one event is required.
 
 ### POST `/itinerary/event`
 
