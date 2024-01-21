@@ -2,7 +2,7 @@
 from typing import List
 
 from .driver import get_driver
-from ..models.post import ClassifiedSocialMediaPost, SocialMediaPost
+from ..models import ClassifiedSocialMediaPost, SocialMediaPost
 
 
 def get_board(user_id: str) -> List[SocialMediaPost]:

@@ -7,3 +7,4 @@ from .base import app
 # We need to import each file which defines routes to ensure that the routes are
 # registered with the application.
 from . import board
+from . import venue
