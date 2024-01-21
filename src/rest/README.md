@@ -39,21 +39,17 @@ add messages to the chat session.
 
 We will provie the following HTTP endpoints for our resources
 
-## Post Resource
+## Board Resource
 
-### GET `/post?user_id=<user_id: str>`
+### GET `/board?user_id=<user_id: str>`
 
 Get a user's mood board posts.
 
-### POST `/post`
+### PUT `/board`
 
-Add a post to a user's mood board.
+Upsert a post to the mood board.
 
-### PUT `/post`
-
-Update a social media post (typically for thumbnails)
-
-### DELETE `/post`
+### DELETE `/board`
 
 Remove a post from a user's mood board.
 
