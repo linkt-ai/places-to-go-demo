@@ -17,7 +17,18 @@ pip install -r requirements.txt
 ```
 
 Once you have an environment created, be sure that you place a copy of `.env` in
-the root of the project.
+the root of the project. We will need this file in order to connect with
+external services. Please consult with `.env.example` if you are unsure of the
+variables that are required for you to include.
+
+Finally, you can run the application with:
+
+```bash
+uvicorn src.rest.app:app --host 127.0.0.1 --port 8000 --reload
+```
+
+This will launch the application locally on port 8000, and it will restart the
+server everytime a file is changed.
 
 # Resources
 
