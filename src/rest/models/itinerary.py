@@ -2,8 +2,9 @@
 import json
 import re
 from datetime import date, datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
+from dateutil import parser
 from pydantic import BaseModel
 
 from .event import Event
@@ -19,6 +20,17 @@ class CitiesDoNotMatchError(Exception):
 
     def __str__(self):
         return f"Venue city ({self.venue_city}) and itinerary city ({self.itinerary_city}) do not match."
+
+
+class InvalidStartAndEndTimeError(Exception):
+    """The InvalidStartAndEndTimeError class defines the exception raised when an event has an invalid start time or end time."""
+
+    def __init__(self, start_time: datetime, end_time: datetime):
+        self.start_time = start_time
+        self.end_time = end_time
+
+    def __str__(self):
+        return f"Start time ({self.start_time}) is after end time ({self.end_time})."
 
 
 class InvalidEventTimeError(Exception):
@@ -95,6 +107,46 @@ class Itinerary(BaseModel):
         data = json.loads(json_data)
         return data
 
+    def pop_event(self, event_id: str) -> Event:
+        """Remove an event from the itinerary.
+
+        Args:
+            event_id (str): The ID of the event to get.
+
+        Returns:
+            Event: The event.
+        """
+        for event in self.events:
+            # If we find the matching event
+            if event.id == event_id:
+                # Remove it from the itinerary and return it to the caller
+                self.events.remove(event)
+                return event
+
+        return None
+
+    def make_times_aware(
+        self, start_time: str, end_time: str
+    ) -> Tuple[datetime, datetime]:
+        """Make the start time and end time aware of the itinerary's timezone.
+
+        Args:
+            start_time (datetime): The start time.
+            end_time (datetime): The end time.
+
+        Returns:
+            Tuple[datetime, datetime]: The start time and end time in the itinerary's timezone.
+        """
+        naive_start = parser.parse(start_time)
+        naive_end = parser.parse(end_time)
+
+        tz = City.get_timezone(self.city)
+
+        aware_start = tz.localize(naive_start)
+        aware_end = tz.localize(naive_end)
+
+        return aware_start, aware_end
+
     def validate_new_event(
         self, city: City, start_time: datetime, end_time: datetime
     ) -> None:
@@ -112,6 +164,9 @@ class Itinerary(BaseModel):
         # Assert that the start time and end time are within the start date and end date
         if city != self.city:
             raise CitiesDoNotMatchError(city, self.city)
+
+        if start_time > end_time:
+            raise InvalidStartAndEndTimeError(start_time, end_time)
 
         if start_time.date() < self.start_date or end_time.date() > self.end_date:
             raise InvalidEventTimeError(

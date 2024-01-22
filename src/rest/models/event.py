@@ -4,11 +4,9 @@ import re
 from datetime import datetime
 from uuid import uuid4
 
-from dateutil import parser
-
 from pydantic import BaseModel
 
-from .venue import City, YelpVenue
+from .venue import YelpVenue
 
 
 class Event(BaseModel):
@@ -81,13 +79,8 @@ class Event(BaseModel):
             CitiesDoNotMatchError: If the venue city does not match the itinerary city.
             EventTimeOverlapError: If the event overlaps with an existing event.
         """
-        naive_start = parser.parse(start_time)
-        naive_end = parser.parse(end_time)
-
-        tz = City.get_timezone(itinerary.city)
-
-        aware_start = tz.localize(naive_start)
-        aware_end = tz.localize(naive_end)
+        # Make the times aware of the destination TZ
+        aware_start, aware_end = itinerary.make_times_aware(start_time, end_time)
 
         # Check if the event is valid with the itinerary
         itinerary.validate_new_event(venue.city, aware_start, aware_end)

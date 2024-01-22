@@ -4,6 +4,7 @@ from .event import Event
 from .itinerary import (
     Itinerary,
     InvalidEventTimeError,
+    InvalidStartAndEndTimeError,
     CitiesDoNotMatchError,
     EventTimeOverlapError,
 )
