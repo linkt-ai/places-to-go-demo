@@ -9,4 +9,5 @@ from .base import app
 from . import board
 from . import event
 from . import itinerary
+from . import user
 from . import venue

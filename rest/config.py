@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     NEO4J_DATABASE_URL: str = os.getenv("NEO4J_DATABASE_URL")
     NEO4J_DATABASE_PASSWORD: str = os.getenv("NEO4J_DATABASE_PASSWORD")
 
+    CLERK_SECRET_KEY: str = os.getenv("CLERK_SECRET_KEY")
+
 
 # Initialize this module's settings when the file is first defined
 settings = Settings()

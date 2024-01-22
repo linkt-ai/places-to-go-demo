@@ -12,3 +12,4 @@ from .itinerary import (
     EventTimeOverlapError,
 )
 from .venue import City, YelpVenue
+from .user import User

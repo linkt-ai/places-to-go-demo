@@ -83,3 +83,13 @@ Edit the times of an event in the user's itinerary.
 ### DELETE `/itinerary/event`
 
 Delete an event from the user's itinerary.
+
+## User Resource
+
+### POST `/user`
+
+Create a new user with a username and password
+
+### GET `/user?user_id=<user_id: str>`
+
+Get the users in the database. Optionally, filter by user_id.
