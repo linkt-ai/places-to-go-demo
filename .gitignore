@@ -1,6 +1,7 @@
 # Directories
 data/
 .venv/
+.rest-venv/
 checkpoints/
 
 .DS_Store

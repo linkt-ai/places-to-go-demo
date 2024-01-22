@@ -2,13 +2,14 @@ FROM python:3.11
 
 WORKDIR /app  
 
-COPY src/flask/ ./flask_app/
-COPY models/bert-social.model ./models/
+COPY requirements.txt ./
 
 RUN pip install --upgrade pip
-RUN pip install torch transformers flask
+RUN pip install -r requirements.txt
 
-EXPOSE 8080 
+COPY rest ./rest
+COPY checkpoints/bert-social.model ./checkpoints/
 
-ENTRYPOINT ["python", "-m"]
-CMD ["flask_app"]
+EXPOSE 8000 
+
+CMD ["uvicorn", "rest.app:app", "--host", "0.0.0.0", "--port", "8000"]
