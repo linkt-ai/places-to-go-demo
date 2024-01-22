@@ -1,5 +1,6 @@
 """The venue.py file defines the data models for the Venue resource."""
 import json
+import pytz
 from enum import Enum
 from typing import Any, Dict
 
@@ -14,6 +15,25 @@ class City(Enum):
     CHICAGO = "CHICAGO"
     SCOTTSDALE = "SCOTTSDALE"
     MIAMI = "MIAMI"
+
+    @staticmethod
+    def get_timezone(city: "City") -> pytz.timezone:
+        """Get the timezone of the city.
+
+        Args:
+            city (City): The city.
+
+        Returns:
+            pytz.timezone: The timezone of the city.
+        """
+        timezones = {
+            City.NYC: "America/New_York",
+            City.LA: "America/Los_Angeles",
+            City.CHICAGO: "America/Chicago",
+            City.SCOTTSDALE: "America/Phoenix",
+            City.MIAMI: "America/New_York",
+        }
+        return pytz.timezone(timezones.get(city, "UTC"))
 
 
 class YelpVenue(BaseModel):

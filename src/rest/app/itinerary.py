@@ -84,7 +84,7 @@ async def route__create_itinerary(payload: HTTPItineraryPOSTRequest) -> JSONResp
         return JSONResponse(
             status_code=200,
             content={
-                "itinerary_created_count": 1 if existed else 0,
+                "itinerary_created_count": 1 if not existed else 0,
                 "itinerary": new_itinerary.model_dump(),
             },
         )

@@ -18,7 +18,18 @@ def get_itinerary(user_id: str) -> Union[Itinerary, None]:
         driver = get_driver()
         with driver.session() as session:
             result = session.run(
-                "MATCH (n: Itinerary)-[:HAS_EVENT]->(e:Event) WHERE n.userId = $user_id RETURN n, collect(e) as events",
+                "MATCH (n: Itinerary) "
+                "WHERE n.userId = $user_id "
+                "OPTIONAL MATCH (n)-[:HAS_EVENT]->(e:Event)-[:AT]->(v:Venue) "
+                "RETURN n, collect({ "
+                "id: e.id, "
+                "title: e.title, "
+                "venueId: v.id, "
+                "url: e.url, "
+                "thumbnailUrl: e.thumbnailUrl, "
+                "startTime: apoc.date.format(e.startTime.epochMillis, 'ms', 'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ'), "
+                "endTime: apoc.date.format(e.endTime.epochMillis, 'ms', 'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ') "
+                "}) as events",
                 {
                     "user_id": user_id,
                 },
@@ -26,9 +37,24 @@ def get_itinerary(user_id: str) -> Union[Itinerary, None]:
 
             record = result.single()
             itinerary_record = record["n"]
-            events = record["events"]
 
-            events = [Event(**event) for event in events]
+            # Check if the first event is None
+            if record["events"][0]["id"] is None:
+                events = []
+            else:
+                events = [
+                    Event(
+                        id=event["id"],
+                        title=event["title"],
+                        venue_id=event["venueId"],
+                        start_time=event["startTime"],
+                        end_time=event["endTime"],
+                        url=event["url"],
+                        thumbnail_url=event["thumbnailUrl"],
+                    )
+                    for event in record["events"]
+                ]
+
             itinerary = Itinerary(events=events, **itinerary_record)
             return itinerary
     except TypeError:
@@ -37,14 +63,14 @@ def get_itinerary(user_id: str) -> Union[Itinerary, None]:
 
 def create_itinerary(
     itinerary: Itinerary,
-) -> Itinerary:
+) -> bool:
     """Create an itinerary for a user.
 
     Args:
         itinerary: The itinerary to create. Expected to have no events.
 
     Returns:
-        Itinerary: The itinerary for the user.
+        bool: True if the itinerary existed, False otherwise.
 
     Raises:
         ValueError: If the itinerary has events.
@@ -57,7 +83,7 @@ def create_itinerary(
         # Delete existing itinerary and related events
         result = session.run(
             """
-            MATCH (n:Itinerary {userId: $user_id})-[r:HAS_EVENT]->(e:Event)
+            MATCH (n:Itinerary) WHERE n.userId = $user_id
             DETACH DELETE n
             RETURN n
             """,
