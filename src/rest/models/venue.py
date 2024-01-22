@@ -1,10 +1,11 @@
 """The venue.py file defines the data models for the Venue resource."""
 import json
-import pytz
 from enum import Enum
 from typing import Any, Dict
 
-from pydantic import BaseModel
+import pytz
+
+from .base import BaseModel
 
 
 class City(Enum):

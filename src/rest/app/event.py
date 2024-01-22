@@ -59,7 +59,9 @@ class HTTPEventDELETERequest(BaseModel):
 
 
 @app.post("/event")
-async def route__post_event(payload: HTTPEventPOSTRequest) -> JSONResponse:
+async def route__post_event(  # pylint: disable=too-many-return-statements
+    payload: HTTPEventPOSTRequest,
+) -> JSONResponse:
     """Create an event.
 
     NOTE: The yelp_id is used to fetch the venue of the event. If the city of the
@@ -136,7 +138,9 @@ async def route__post_event(payload: HTTPEventPOSTRequest) -> JSONResponse:
 
 
 @app.put("/event")
-async def route__put_event(payload: HTTPEventPUTRequest) -> JSONResponse:
+async def route__put_event(  # pylint: disable=too-many-return-statements
+    payload: HTTPEventPUTRequest,
+) -> JSONResponse:
     """Update the times of anevent.
 
     Args:
@@ -179,7 +183,8 @@ async def route__put_event(payload: HTTPEventPUTRequest) -> JSONResponse:
 
         # Now we have an existant event. We need to validate the new times
         itinerary.validate_new_event(
-            itinerary.city,  # We can use the itinerary city because we know the event is in the itinerary
+            # We can use the itinerary city because we know the event is in the itinerary
+            itinerary.city,
             aware_start,
             aware_end,
         )

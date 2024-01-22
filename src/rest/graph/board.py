@@ -52,7 +52,8 @@ def create_post(_post: ClassifiedSocialMediaPost) -> int:
     with driver.session() as session:
         result = session.run(
             "MERGE (p: Post {userId: $user_id, videoId: $video_id}) "
-            "ON CREATE SET p.authorName = $author_name, p.postUrl = $post_url, p.thumbnailUrl = $thumbnail_url, p.embedCode = $embed_code "
+            "ON CREATE SET p.authorName = $author_name, p.postUrl = $post_url, "
+            "p.thumbnailUrl = $thumbnail_url, p.embedCode = $embed_code "
             "ON MATCH SET p.thumbnailUrl = $thumbnail_url, p.embedCode = $embed_code "
             f"{relational_cypher} "
             "RETURN p",

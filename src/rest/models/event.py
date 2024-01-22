@@ -1,11 +1,8 @@
 """The event.py file defines the data models for the Event resource."""
-import json
-import re
 from datetime import datetime
 from uuid import uuid4
 
-from pydantic import BaseModel
-
+from .base import BaseModel
 from .venue import YelpVenue
 
 
@@ -34,26 +31,6 @@ class Event(BaseModel):
             kwargs = {self._camel_to_snake(k): v for k, v in kwargs.items()}
 
         super().__init__(**kwargs)
-
-    @staticmethod
-    def _camel_to_snake(name):
-        """Convert a string from camel case to snake case.
-
-        Args:
-            name (str): The string to convert.
-        """
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
-
-    def model_dump(self, **kwargs):
-        """Dump the model to a dictionary.
-
-        Returns:
-            Dict[str, str]: The model as a dictionary.
-        """
-        json_data = self.model_dump_json(**kwargs)
-        data = json.loads(json_data)
-        return data
 
     @classmethod
     def create_event(

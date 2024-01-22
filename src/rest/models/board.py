@@ -4,9 +4,8 @@ Currently, TikTok is the only platform for which social media posts are supporte
 social media posts are stored in the Neo4J database. We use there standard 
 database driver to access the database.
 """
-import re
 
-from pydantic import BaseModel
+from .base import BaseModel
 
 
 class SocialMediaPost(BaseModel):
@@ -38,7 +37,8 @@ class SocialMediaPostPersonas(BaseModel):
         beauty_fashion_aficionado (float): The score for the beauty and fashion aficionado persona.
         family_oriented_individual (float): The score for the family oriented individual persona.
         art_culture_enthusiast (float): The score for the art and culture enthusiast persona.
-        wellness_self_care_advocate (float): The score for the wellness and self care advocate persona.
+        wellness_self_care_advocate (float): The score for the wellness and self care advocate
+            persona.
         adventurer_explorer (float): The score for the adventurer and explorer persona.
         eco_conscious_consumer (float): The score for the eco conscious consumer persona.
     """
@@ -66,12 +66,6 @@ class SocialMediaPostPersonas(BaseModel):
 
         # Create the object.
         super().__init__(**kwargs)
-
-    @staticmethod
-    def _camel_to_snake(name):
-        """Convert a string from camel case to snake case."""
-        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
-        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
 
 
 class ClassifiedSocialMediaPost(SocialMediaPost):

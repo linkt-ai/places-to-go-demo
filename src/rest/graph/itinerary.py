@@ -27,8 +27,10 @@ def get_itinerary(user_id: str) -> Union[Itinerary, None]:
                 "venueId: v.id, "
                 "url: e.url, "
                 "thumbnailUrl: e.thumbnailUrl, "
-                "startTime: apoc.date.format(e.startTime.epochMillis, 'ms', 'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ'), "
-                "endTime: apoc.date.format(e.endTime.epochMillis, 'ms', 'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ') "
+                "startTime: apoc.date.format(e.startTime.epochMillis, 'ms', "
+                "'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ'), "
+                "endTime: apoc.date.format(e.endTime.epochMillis, 'ms', "
+                "'yyyy-MM-dd\\'T\\'HH:mm:ss.SSSZ') "
                 "}) as events",
                 {
                     "user_id": user_id,

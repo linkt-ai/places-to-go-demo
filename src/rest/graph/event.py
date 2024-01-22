@@ -15,9 +15,10 @@ def create_event(event: Event, user_id: str) -> bool:
             "MATCH (i: Itinerary {userId: $user_id}) "  # Find the user's itinerary
             "CREATE (e: Event {id: $id, startTime: $start_time, endTime: $end_time, \
                 title: $title, url: $url, thumbnailUrl: $thumbnail_url}) "
-            "CREATE (i)-[:HAS_EVENT]->(e) "  # Create a relationship between the event and the itinerary
-            "CREATE (e)-[:AT]->(v) "  # Create a relationship between the event and the venue
-            "RETURN e",
+            # Create a relationship between the event and the itinerary
+            "CREATE (i)-[:HAS_EVENT]->(e) "
+            # Create a relationship between the event and the venue
+            "CREATE (e)-[:AT]->(v) " "RETURN e",
             {
                 "venue_id": event.venue_id,
                 "user_id": user_id,

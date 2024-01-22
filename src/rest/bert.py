@@ -1,4 +1,5 @@
 """This file handles classifying social media posts."""
+from typing import Dict
 
 import torch
 from torch.nn import functional as F
@@ -16,7 +17,7 @@ KEYWORDS = [
 ]
 
 
-class BertClassifier:
+class BertClassifier:  # pylint: disable=too-few-public-methods
     """We want to make predictions that return the classification scores for all personas."""
 
     def __init__(self, model_path: str) -> None:
@@ -33,7 +34,15 @@ class BertClassifier:
         self.model.load_state_dict(torch.load(model_path))
         self.model.config.id2label = KEYWORDS
 
-    def classify(self, sequence):
+    def classify(self, sequence: str) -> Dict[str, float]:
+        """Classify a sequence of text.
+
+        Args:
+            sequence (str): The sequence of text to classify.
+
+        Returns:
+            Dict[str, float]: The classification scores for each persona.
+        """
         inputs = self.tokenizer(
             sequence, padding=True, truncation=True, max_length=512, return_tensors="pt"
         )
@@ -41,10 +50,7 @@ class BertClassifier:
             logits = self.model(**inputs).logits
         probabilities = F.sigmoid(logits)
 
-        classes = {
-            label: score
-            for label, score in zip(
-                self.model.config.id2label, probabilities.squeeze(0).tolist()
-            )
-        }
+        classes = dict(
+            zip(self.model.config.id2label, probabilities.squeeze(0).tolist())
+        )
         return classes
