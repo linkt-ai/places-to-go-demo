@@ -32,6 +32,13 @@ class Event(BaseModel):
 
         super().__init__(**kwargs)
 
+    @property
+    def context(self) -> str:
+        """Return the context of the event to be used by the LLM."""
+        start = self.start_time.strftime("%Y-%m-%d %H:%M")
+        end = self.end_time.strftime("%Y-%m-%d %H:%M")
+        return EVENT_CONTEXT_TEMPLATE.format(title=self.title, start=start, end=end)
+
     @classmethod
     def create_event(
         cls,
@@ -74,3 +81,11 @@ class Event(BaseModel):
             url=venue.url,
             thumbnail_url=venue.thumbnail_url,
         )
+
+
+EVENT_CONTEXT_TEMPLATE = """
+    {title}
+    ----------------------------------------------
+    Start: {start}
+    End: {end}
+"""

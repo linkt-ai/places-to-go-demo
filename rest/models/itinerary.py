@@ -90,6 +90,19 @@ class Itinerary(BaseModel):
 
         super().__init__(**kwargs)
 
+    @property
+    def context(self) -> str:
+        """Get the context of the itinerary to inject into new LLM conversations."""
+        events_str = "\n".join([event.context for event in self.events])
+        start = self.start_date.strftime("%Y-%m-%d")
+        end = self.end_date.strftime("%Y-%m-%d")
+        return ITINERARY_CONTEXT_TEMPLATE.format(
+            city=self.city,
+            start_date=start,
+            end_date=end,
+            events=events_str,
+        )
+
     def pop_event(self, event_id: str) -> Event:
         """Remove an event from the itinerary.
 
@@ -174,3 +187,15 @@ class Itinerary(BaseModel):
             # Check if the event contains an existing event
             if start_time <= event.start_time and end_time >= event.end_time:
                 raise EventTimeOverlapError(start_time, end_time, event.title)
+
+
+ITINERARY_CONTEXT_TEMPLATE = """
+City: {city}
+Start Date: {start_date}
+End Date: {end_date}
+------------------------
+
+Events:
+------------------------
+{events}
+"""

@@ -18,6 +18,24 @@ class City(Enum):
     MIAMI = "MIAMI"
 
     @staticmethod
+    def schema() -> Dict[str, Any]:
+        """Get the schema for the city enum.
+
+        Returns:
+            Dict[str, Any]: The schema for the city enum.
+        """
+        return {
+            "type": "string",
+            "enum": [
+                City.NYC.value,
+                City.LA.value,
+                City.CHICAGO.value,
+                City.SCOTTSDALE.value,
+                City.MIAMI.value,
+            ],
+        }
+
+    @staticmethod
     def get_timezone(city: "City") -> pytz.timezone:
         """Get the timezone of the city.
 
