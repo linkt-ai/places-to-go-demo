@@ -1,7 +1,7 @@
 """The agent module defines the LLM agent that handles communicating with the user."""
 
 import json
-from typing import List, Optional, Union
+from typing import List, Union
 
 from openai import OpenAI
 from openai.types.chat import (
@@ -10,6 +10,7 @@ from openai.types.chat import (
     # Models to be instantiated
     ChatCompletionSystemMessageParam,  # The system message model
     ChatCompletionUserMessageParam,  # The user message model
+    ChatCompletionAssistantMessageParam,
 )
 
 from .prompts import SYSTEM_PROMPT
@@ -17,6 +18,7 @@ from .tools import tools, Event, execute_tool
 from .types import AgentMessage, ErrorMessage
 
 from ..graph import graph_itinerary
+from ..redis import redis_client
 
 
 class Agent:
@@ -32,28 +34,20 @@ class Agent:
     def __init__(
         self,
         user_id: str,
+        session_id: str,
         model: str = "gpt-3.5-turbo-1106",
-        debug: bool = False,
-        message_history: Optional[List[ChatCompletionMessage]] = None,
     ):
         """Setup the agent object."""
 
         # The ID of the user that the agent is interacting with. This will be used for querying
         # the Graph Database.
         self._user_id = user_id
+        self._session_id = session_id
 
         self._tools = tools
-        self.debug = debug
 
         # Establish the message history if it exists, otherwise create a new message history.
-        if message_history:
-            print("Using message history")
-            self.messages = message_history
-        else:
-            self.messages = [
-                ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT),
-                ChatCompletionUserMessageParam(role="user", content=self.itinerary),
-            ]
+        self._load_chat_history()
 
         self.model = model
         self.client = OpenAI()
@@ -83,6 +77,29 @@ class Agent:
 
         return None
 
+    def _load_chat_history(self) -> None:
+        """Load the chat history from the Redis endpoint."""
+        # Establish the message history if it exists, otherwise create a new message history.
+        chat_history = (
+            redis_client.get_chat_history(self._session_id)
+            if self._session_id
+            else None
+        )
+        if chat_history is not None:
+            for i, msg in enumerate(chat_history):
+                if msg.get("role", "") == "assistant":
+                    if msg.get("function_call", "") is None:
+                        del msg["function_call"]
+                    if msg.get("tool_calls", "") is None:
+                        del msg["tool_calls"]
+                    chat_history[i] = ChatCompletionAssistantMessageParam(**msg)
+            self.messages = chat_history
+        else:
+            self.messages = [
+                ChatCompletionSystemMessageParam(role="system", content=SYSTEM_PROMPT),
+                ChatCompletionUserMessageParam(role="user", content=self.itinerary),
+            ]
+
     def __call__(self, query: str) -> Union[AgentMessage, ErrorMessage]:
         """Execute the agent."""
         self.messages.append(ChatCompletionUserMessageParam(role="user", content=query))
@@ -94,16 +111,16 @@ class Agent:
                 self._step()
 
                 # Get the last message from the agent (the result of the last step)
-                last_message: ChatCompletionMessage = self.messages[-1]
+                last_message = self.messages[-1]
 
+                print("last message: ", last_message)
                 # If the last message is a tool_call, execute the tool call.
                 if (
-                    self._finish_reason == "tool_calls"
-                    and len(last_message.tool_calls) > 0
+                    isinstance(last_message, ChatCompletionMessage)
+                    and self._finish_reason == "tool_calls"
+                    and len(last_message.tool_calls) > 0  # pylint: disable=no-member
                 ):
-                    tool_calls: List[
-                        ChatCompletionMessageToolCall
-                    ] = last_message.tool_calls
+                    tool_calls = last_message.tool_calls  # pylint: disable=no-member
 
                     # If the agent is producing multiple calls per step, that is a problem.
                     assert (
@@ -124,6 +141,7 @@ class Agent:
             agent_response = AgentMessage(
                 content=last_message.content, events=self.last_events
             )
+            redis_client.update_chat_history(self._session_id, self.messages)
             return agent_response
         except Exception as exp:  # pylint: disable=broad-except
             print(exp)
@@ -131,6 +149,10 @@ class Agent:
                 content=f"An error occurred while executing the agent: {exp}"
             )
             return error_message
+
+    def delete(self) -> None:
+        """Delete the chat history from the Redis endpoint."""
+        redis_client.delete_chat_history(self._session_id)
 
     def _step(self) -> None:
         """Execute a single step of the agent."""
@@ -150,7 +172,5 @@ class Agent:
         tool_call_id = tool_call_message.id
         tool_name = tool_call_message.function.name
         tool_args = json.loads(tool_call_message.function.arguments)
-        tool_result = execute_tool(
-            tool_call_id, tool_name, debug=self.debug, **tool_args
-        )
+        tool_result = execute_tool(tool_call_id, tool_name, **tool_args)
         self.messages.append(tool_result)

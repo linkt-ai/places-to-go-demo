@@ -1,7 +1,6 @@
 """The tools.py file defines the tools that are used by the agent."""
 import json
-import time
-from typing import List
+from typing import List, Optional
 from uuid import uuid4
 
 from pinecone import ScoredVector
@@ -32,6 +31,9 @@ class Event(BaseEventModel):
     to implement additional functionality needed by the Agent.
     """
 
+    title: Optional[str] = None
+    venue_id: Optional[str] = None
+
     @classmethod
     def from_venues(
         cls, venues: List[VenueInformation], start_time: str, end_time: str
@@ -48,7 +50,7 @@ class Event(BaseEventModel):
                 start_time=start_time,
                 end_time=end_time,
                 url="http://business-name.com/",
-                thumbanil_url="http://business-name.com/image.jpg",
+                thumbnail_url="http://business-name.com/image.jpg",
             )
             for venue in venues
         ]
@@ -61,11 +63,10 @@ class VenueQueryTool(BaseModel):
     city: City
     query: str
 
-    def __init__(self, debug: bool = False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._openai_client = OpenAI()
         self._index = pinecone_index
-        self._debug = debug
 
     def _embed_query(self, query: str) -> List[float]:
         """Embed a query using the OpenAI API."""
@@ -80,7 +81,7 @@ class VenueQueryTool(BaseModel):
         # Get a list of relevant venues from the Vectorstore database.
         query_value = self._embed_query(self.query)
         venue_results = self._index.query(
-            query_value,
+            vector=query_value,
             top_k=10,
             namespace="venues",
             include_metadata=True,
@@ -99,12 +100,6 @@ class VenueQueryTool(BaseModel):
 
     def __call__(self) -> List[VenueResult]:
         """Execute the VenueQueryTool."""
-        if self._debug:
-            start = time.perf_counter()
-            print(
-                f"\tQuerying for {self.category.value} in {self.city.value} \
-                    with query: {self.query}"
-            )
 
         # Get a list of relevant venues from the Vectorstore database.
         filtered_venues = self._query_vectorstore()
@@ -119,10 +114,6 @@ class VenueQueryTool(BaseModel):
             VenueResult(**venue.metadata, relevance_score=venue.score)
             for venue in filtered_venues
         ]
-
-        if self._debug:
-            end = time.perf_counter()
-            print(f"\tFound {len(results)} results in {round(end - start, 2)} seconds.")
         return results
 
     @staticmethod
@@ -158,22 +149,12 @@ class EventCreatorTool(BaseModel):
     start_time: str
     end_time: str
 
-    def __init__(self, debug: bool = False, **kwargs):
-        super().__init__(**kwargs)
-        self._debug = debug
-
     def __call__(self) -> List[Event]:
         """Execute the EventCreatorTool."""
-        if self._debug:
-            start = time.perf_counter()
-            print(f"\tCreating {len(self.venues)} events from venues.")
         # We simply create an event for each venue.
 
         events = Event.from_venues(self.venues, self.start_time, self.end_time)
 
-        if self._debug:
-            end = time.perf_counter()
-            print(f"\tCreated {len(events)} events in {round(end - start, 2)} seconds.")
         return events
 
     @staticmethod
@@ -200,20 +181,18 @@ class EventCreatorTool(BaseModel):
         }
 
 
-def execute_tool(
-    _id: str, name: str, debug: bool = False, **kwargs
-) -> ChatCompletionMessageToolCallParam:
+def execute_tool(_id: str, name: str, **kwargs) -> ChatCompletionMessageToolCallParam:
     """Execute a tool given a name and a set of arguments."""
     if name == "venue_query":
-        tool = VenueQueryTool(debug=debug, **kwargs)
+        tool = VenueQueryTool(**kwargs)
     elif name == "event_creator":
-        tool = EventCreatorTool(debug=debug, **kwargs)
+        tool = EventCreatorTool(**kwargs)
     else:
         raise ValueError(f"Invalid tool name: {name}.")
     result = tool()
     data = [item.model_dump() for item in result]
     return ChatCompletionMessageToolCallParam(
-        id=_id, role="tool", name=name, content=json.dumps(data)
+        tool_call_id=_id, role="tool", name=name, content=json.dumps(data)
     )
 
 

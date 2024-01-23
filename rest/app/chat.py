@@ -1,4 +1,6 @@
 """The chat.py file defines the routes for utilizing the chat resource."""
+from uuid import uuid4
+
 from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
@@ -27,6 +29,32 @@ class HTTPChatPUTRequest(BaseModel):
     content: str
 
 
+class HTTPChatDeleteRequest(BaseModel):
+    """The request model for a DELETE request to the Chat resource."""
+
+    # The ID of the chat session. Used to retrieve context from Redis
+    chat_id: str
+
+    # The id of the user sending the chat
+    user_id: str
+
+
+@app.post("/chat")
+async def route__post_chat(_payload: HTTPChatPOSTRequest):
+    """Create a new chat session."""
+
+    try:
+        _id = str(uuid4())
+
+        return JSONResponse(status_code=200, content={"chat_id": _id})
+    except Exception as exp:  # pylint: disable=broad-except
+        logger.error(exp)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
+        )
+
+
 @app.put("/chat")
 async def route__put_chat(payload: HTTPChatPUTRequest):
     """Send a message to the agent.
@@ -47,7 +75,7 @@ async def route__put_chat(payload: HTTPChatPUTRequest):
 
         agent = Agent(
             payload.user_id,
-            #   message_history=message_history,
+            payload.chat_id,
         )
         response = agent(payload.content)
 
@@ -59,4 +87,26 @@ async def route__put_chat(payload: HTTPChatPUTRequest):
         return JSONResponse(
             status_code=500,
             content={"detail": "An internal server error occurred"},
+        )
+
+
+@app.delete("/chat")
+async def route__delete_chat(payload: HTTPChatDeleteRequest):
+    """Delete a chat session."""
+
+    try:
+        agent = Agent(
+            payload.user_id,
+            payload.chat_id,
+        )
+
+        agent.delete()
+
+        return JSONResponse(status_code=200, content={"detail": "Chat session deleted"})
+
+    except Exception as exp:  # pylint: disable=broad-except
+        logger.error(exp)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"},
         )

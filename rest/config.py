@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     PINECONE_ENVIRONMENT: str = os.getenv("PINECONE_ENVIRONMENT")
     PINECONE_INDEX: str = os.getenv("PINECONE_INDEX")
 
+    REDIS_ENDPOINT: str = os.getenv("REDIS_ENDPOINT")
+
 
 # Initialize this module's settings when the file is first defined
 settings = Settings()
