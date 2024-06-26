@@ -1,6 +1,7 @@
 """The redis.py file defines a simple Redis client that can be used to get, update, and 
 delete chat conversations.
 """
+
 import json
 from typing import Dict, List, Union
 
@@ -15,7 +16,7 @@ class RedisClient:
     def __init__(self):
         """Setup the connection to the Redis endpoint."""
         self._url = settings.REDIS_ENDPOINT
-        self._client = Redis.from_url(self._url)
+        self._client = Redis.from_url(self._url, socket_timeout=5.0)
 
     def get_chat_history(self, chat_id: str) -> Union[List[Dict[str, str]], None]:
         """Get the chat history from the Redis endpoint."""

@@ -16,6 +16,7 @@ from ..pinecone import pinecone_index
 class VenueInformation(BaseModel):
     """The information about a venue managed by the LLM."""
 
+    id: str
     name: str
     description: str
 
@@ -40,13 +41,15 @@ class Event(BaseEventModel):
     ) -> List["Event"]:
         """Create an event from a venue."""
         # Get the urls and thumbnail urls for the venues from the Graph
-        # TODO: Implement this
+        # TODO: Implement this query to the graph
 
+        print(venues)
         # Create an list of Event object to be returned to the client
         return [
             cls(
                 id=str(uuid4()),
-                name=venue.name,
+                title=venue.name,
+                venue_id=venue.id,
                 start_time=start_time,
                 end_time=end_time,
                 url="http://business-name.com/",
@@ -111,7 +114,7 @@ class VenueQueryTool(BaseModel):
 
         # Format the results as VenueResult objects
         results = [
-            VenueResult(**venue.metadata, relevance_score=venue.score)
+            VenueResult(id=venue.id, **venue.metadata, relevance_score=venue.score)
             for venue in filtered_venues
         ]
         return results
@@ -191,6 +194,7 @@ def execute_tool(_id: str, name: str, **kwargs) -> ChatCompletionMessageToolCall
         raise ValueError(f"Invalid tool name: {name}.")
     result = tool()
     data = [item.model_dump() for item in result]
+    print(data)
     return ChatCompletionMessageToolCallParam(
         tool_call_id=_id, role="tool", name=name, content=json.dumps(data)
     )

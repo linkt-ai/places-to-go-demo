@@ -1,4 +1,5 @@
 """This file defines a simple helper function to get a driver for the Neo4J database."""
+
 from neo4j import GraphDatabase, Driver
 
 from ..config import settings
@@ -15,4 +16,10 @@ def get_driver() -> Driver:
     Returns:
         neo4j.Driver: The driver for the Neo4J database.
     """
-    return GraphDatabase.driver(DB_URL, auth=(DB_USER, DB_PASSWORD))
+    return GraphDatabase.driver(
+        DB_URL,
+        auth=(DB_USER, DB_PASSWORD),
+        connection_acquisition_timeout=2,
+        max_connection_pool_size=50,
+        max_connection_lifetime=600,
+    )
